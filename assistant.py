@@ -22,10 +22,10 @@ from twilio.rest import Client
 from clint.textui import progress
 from ecapture import ecapture as ec
 from bs4 import BeautifulSoup
-import win32com.client as wincl
+# import win32com.client as wincl
 from urllib.request import urlopen
 
-engine = pyttsx3.init('sapi5')
+engine = pyttsx3.init('espeak')
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
 
@@ -89,3 +89,9 @@ def sendEmail(to, content):
     server.sendmail('your email id', to, content)
     server.close()
     
+if __name__ == '__main__':
+    clear = lambda: os.system('cls')
+    
+    clear()
+    wishMe()
+    username()
