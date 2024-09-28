@@ -12,14 +12,17 @@ A Python project that utilizes various libraries to create a virtual assistant.
 * ecapture
 * bs4
 * google-generativeai
+* spotipy
+* pyjokes
 
 ## Setup
 
 1. Install the required packages using pip:
    ```bash
-    pip install SpeechRecognition pyttsx3 wikipedia wolframalpha ecapture bs4 google-generativeai twilio
+    pip install SpeechRecognition pyttsx3 wikipedia ecapture bs4 google-generativeai spotipy pyjokes
     ```
 2. Create a Google Cloud account and obtain a API key for the Google Text-to-Speech API.
+3. Create a Spotify Developer account and obtain a API key for the Spotify integration.
 
 ## Usage
 
