@@ -189,6 +189,11 @@ def playSpotify():
     except spotipy.exceptions.SpotifyException as e:
         print(f"Spotify API Error: {e}")
         speak(f"Spotify API Error: {e}")
+        
+def open_website(url):
+    if not url.startswith("http://") and not url.startswith("https://"):
+        url = "https://" + url  # Default to https if no scheme is provided
+    webbrowser.open(url)
 
 
 if __name__ == "__main__":
@@ -210,15 +215,21 @@ if __name__ == "__main__":
         All the commands said by user will be stored here in 'query' and will be converted to lowercase for easy recognition of command
         """
         if "open youtube" in query:
-            print("Here you go to Youtube\n")
-            speak("Here you go to Youtube\n")
-            webbrowser.open("youtube.com")
-            sys.exit()
+            print("Here you go to YouTube\n")
+            speak("Here you go to YouTube\n")
+            open_website("youtube.com")
+            exit()
 
         elif "open google" in query:
             print("Here you go to Google\n")
             speak("Here you go to Google\n")
-            webbrowser.open("google.com")
+            open_website("google.com")
+            exit()
+            
+        elif "open github" in query or "open my github" in query:
+            print(f"Here you go to your github")
+            speak(f"Here you go to your github")
+            open_website("github.com/bkk31")
             exit()
 
         elif "the time" in query:
@@ -233,8 +244,22 @@ if __name__ == "__main__":
             
         elif "play liked songs" in query or "play songs" in query or "play like songs" in query:
             playSpotify()
-            exit()
+            exit()   
+
+        elif "restart" in query:
+            subprocess.call(["shutdown", "/r"])
+             
+        elif "hibernate" in query or "sleep" in query:
+            speak("Hibernating")
+            subprocess.call("shutdown / h")
+ 
+        elif "log off" in query or "sign out" in query:
+            speak("Make sure all the application are closed before sign-out")
+            time.sleep(5)
+            subprocess.call(["shutdown", "/l"])
             
+        elif 'joke' in query:
+            speak(pyjokes.get_joke())
 
         else:
             response = model.generate_content(query)
