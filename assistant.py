@@ -259,7 +259,9 @@ if __name__ == "__main__":
             subprocess.call(["shutdown", "/l"])
             
         elif 'joke' in query:
-            speak(pyjokes.get_joke())
+            joke = pyjokes.get_joke()
+            print(joke)
+            speak(joke)
 
         else:
             response = model.generate_content(query)
