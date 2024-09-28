@@ -10,8 +10,6 @@ import datetime
 import wikipedia
 import webbrowser
 import os
-
-# import winshell # For windows
 import shutil  # For Linux machines
 import pyjokes
 import feedparser
@@ -25,12 +23,25 @@ from ecapture import ecapture as ec
 from bs4 import BeautifulSoup
 import sys
 import google.generativeai as Genai
-
-# import win32com.client as wincl
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+from spotipy.cache_handler import CacheFileHandler
 from urllib.request import urlopen
+from dotenv import load_dotenv
 
-api_key = ""
-Genai.configure(api_key=api_key)
+# Load API Keys from .env file
+load_dotenv()
+
+# Store the API keys
+gemini_api = os.getenv('GEMINI_API')
+spotify_client_id = os.getenv('SPOTIFY_CLIENT_ID')
+spotify_client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+weather_api = os.getenv('WEATHER_API')
+
+default_location = 'Bangalore, India'
+
+
+Genai.configure(api_key=gemini_api)
 
 model = Genai.GenerativeModel(
     model_name="gemini-1.5-flash",
@@ -40,11 +51,27 @@ model = Genai.GenerativeModel(
     ),
 )
 
+cache_handler = CacheFileHandler(cache_path=".spotipycache")
+
+sp_oauth = SpotifyOAuth(client_id=spotify_client_id,
+                  client_secret=spotify_client_secret,
+                  redirect_uri="http://localhost:8888/callback",
+                  scope="user-library-read user-modify-playback-state user-read-playback-state",
+                  cache_handler=cache_handler)
+token_info = sp_oauth.get_access_token()
+
+sp = spotipy.Spotify(auth=token_info['access_token'])
+
+# Refresh access token if expired
+if sp_oauth.is_token_expired(token_info):
+    token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+
 assistant = "Veda 1 point o"
 
 engine = pyttsx3.init("sapi5")
 voices = engine.getProperty("voices")
-engine.setProperty("voice", voices[1].id)
+engine.setProperty("voice", voices[0].id)
 
 
 def speak(audio):
@@ -126,6 +153,42 @@ def sendEmail(to, content):
     server.login("your email id", "your email password")
     server.sendmail("your email id", to, content)
     server.close()
+    
+def open_web_player():
+    webbrowser.open("https://open.spotify.com/")
+    print("Opening Spotify Web Player...")
+    speak("Opening Spotify Web Player...")
+    
+def playSpotify():
+    try:
+        devices = sp.devices()
+
+        if not devices['devices']:
+            open_web_player()
+            time.sleep(5)
+            devices = sp.devices()
+        
+        if not devices['devices']:
+            print("Failed to detect the Web Player after opening it.")
+            speak("Failed to detect the Web Player after opening it.")
+            return
+
+        # Retrieve user's liked songs
+        results = sp.current_user_saved_tracks()
+        liked_songs = results["items"]
+
+        # Get the song URIs
+        song_uris = [song["track"]["uri"] for song in liked_songs]
+        
+        # Play the songs on the first available device
+        device_id = devices['devices'][0]['id']
+        sp.start_playback(device_id=device_id, uris=song_uris)
+        print("Playing your liked songs...")
+        speak("Playing your liked songs...")
+
+    except spotipy.exceptions.SpotifyException as e:
+        print(f"Spotify API Error: {e}")
+        speak(f"Spotify API Error: {e}")
 
 
 if __name__ == "__main__":
@@ -146,23 +209,17 @@ if __name__ == "__main__":
         """
         All the commands said by user will be stored here in 'query' and will be converted to lowercase for easy recognition of command
         """
-        # if "wikipedia" in query:
-        #     speak("Searching Wikipedia...")
-        #     query = query.replace("wikipedia", "")
-        #     results = wikipedia.summary(query, sentences=3)
-        #     speak("According to Wikipedia...")
-        #     print(results)
-        #     speak(results)
-
         if "open youtube" in query:
             print("Here you go to Youtube\n")
             speak("Here you go to Youtube\n")
             webbrowser.open("youtube.com")
+            sys.exit()
 
         elif "open google" in query:
             print("Here you go to Google\n")
             speak("Here you go to Google\n")
             webbrowser.open("google.com")
+            exit()
 
         elif "the time" in query:
             strTime = datetime.datetime.now().strftime("%H:%M:%S")
@@ -173,6 +230,11 @@ if __name__ == "__main__":
             print(f"Thank you for using, {assistant}")
             speak(f"Thank you for using, {assistant}")
             sys.exit()
+            
+        elif "play liked songs" in query or "play songs" in query or "play like songs" in query:
+            playSpotify()
+            exit()
+            
 
         else:
             response = model.generate_content(query)
