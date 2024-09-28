@@ -1,0 +1,8 @@
+# Ignore Spotify refresh token
+.spotipycache
+
+# Ignroe username file
+username.txt
+
+# Ignore API keys
+.env
